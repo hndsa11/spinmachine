@@ -1,0 +1,145 @@
+import random
+
+MAX_LINES = 3
+MIN_VALUE = 1
+MAX_VALUE = 100
+
+ROWS = 3
+COLS = 3
+
+symbol_count = {
+    'A': 2,
+    'B': 4,
+    'C': 6,
+    'D': 8
+}
+
+def winnings_check(columns, symbols, lines, bet):
+    winnings = 0
+    for line in range(lines):
+        symbol = columns[0][line]
+        for column in columns:
+            symbol_check = column[line]
+            if symbol != symbol_check:
+                break
+        else:
+            winnings += symbols[symbol] * bet
+    return winnings
+
+
+def get_spin(rows, cols, symbols):
+    all_symbols = []
+    for symbol, symbol_count in symbols.items():
+        for _ in range(symbol_count):
+            all_symbols.append(symbol)
+
+    columns = []
+    for _ in range(cols):
+        column = []
+        current_symbols = all_symbols[:]
+        for _ in range(rows):
+            value = random.choice(current_symbols)
+            current_symbols.remove(value)
+            column.append(value)
+        columns.append(column)
+    return columns
+
+
+def print_machine(columns):
+    for row in range(len(columns[0])):
+        for i, column in enumerate(columns):
+            if i != len(columns) - 1:
+                print(column[row], '|', end=' ')
+            else:
+                print(column[row])
+        print()
+
+
+def deposit():
+    try:
+        with open('deposit.txt', 'r') as file:
+            amount = file.read()
+            if amount.isdigit():
+                amount = int(amount)
+                print(f"Your balance is ${amount}")
+            else:
+                amount = None
+                print("No previous deposit found.")
+    except:
+        print("No previous deposit found.")
+        amount = None
+
+    while True:
+        if amount:
+            reuse = input("Would you like to reuse the previous deposit? (Y/N) ")
+            if reuse.upper() == "Y":
+                return amount
+
+        new_amount = input("Enter amount to deposit: $")
+        if new_amount.isdigit():
+            new_amount = int(new_amount)
+            if new_amount > 0:
+                break
+            else:
+                print('Please enter a value greater than 0')
+        else:
+            print('Please enter a valid number.')
+
+    return new_amount
+
+
+def no_of_lines():
+    while True:
+        lines = input(f'Enter number of lines (1-{MAX_LINES}): ')
+        if lines.isdigit():
+            lines = int(lines)
+            if 1 <= lines <= MAX_LINES:
+                break
+            else:
+                print(f'Please enter a number between 1 and {MAX_LINES}.')
+        else:
+            print('Please enter a valid number.')
+
+    return lines
+
+
+def get_bet():
+    while True:
+        amount = input('Enter bet amount: $')
+        if amount.isdigit():
+            amount = int(amount)
+            if MIN_VALUE <= amount <= MAX_VALUE:
+                break
+            else:
+                print(f'Please enter a number between {MIN_VALUE} and {MAX_VALUE}.')
+        else:
+            print('Please enter a valid number.')
+
+    return amount
+
+
+def save_deposit(amount):
+    with open('deposit.txt', 'w') as file:
+        file.write(str(amount))
+
+
+def main():
+    balance = deposit()
+    save_deposit(balance)
+    lines = no_of_lines()
+
+    while True:
+        bet = get_bet()
+        total_bet = bet * lines
+        if total_bet > balance:
+            print('Your balance is not enough to place this bet.')
+        else:
+            print(f'You are betting {bet} on {lines} lines. Your total bet is {total_bet}.')
+            break
+
+    slots = get_spin(ROWS, COLS, symbol_count)
+    print_machine(slots)
+    winnings = winnings_check(slots, symbol_count, lines, bet)
+    print(f'You won {winnings}.')
+
+main()
